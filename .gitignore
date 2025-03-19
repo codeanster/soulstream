@@ -4,6 +4,7 @@
 # Project specific
 .clinerules
 docs/progress.txt
+plans/
 
 # Python
 __pycache__/
