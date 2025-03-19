@@ -3,9 +3,15 @@ chat.py
 -------
 Chat interaction routes for the Soulstream application.
 Where words flow, and memories form in real-time.
+The interface between thought and conversation.
 """
 
-from flask import Blueprint, request, jsonify
+import logging
+import uuid
+from flask import Blueprint, request, jsonify, current_app
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -16,28 +22,72 @@ def send_message():
     Words exchanged. Memories created.
     Some will last. Most will fade.
     """
-    data = request.get_json()
-    user_message = data.get('message', '')
-    user_id = data.get('user_id', 1)
-    
-    # TODO: Implement actual message processing
-    # 1. Store the message
-    # 2. Generate embeddings
-    # 3. Retrieve relevant memories
-    # 4. Generate AI response
-    
-    # Placeholder response
-    return jsonify({
-        'status': 'success',
-        'response': {
-            'message': f"Echo: I've received your message: '{user_message}'. I remember you.",
-            'referenced_memories': [
-                # Placeholder for memory references
-                {'id': 101, 'summary': 'A conversation about dreams'},
-                {'id': 203, 'summary': 'A shared moment of quiet understanding'}
-            ]
-        }
-    })
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '')
+        user_id = data.get('user_id')
+        character_id = data.get('character_id')
+        
+        if not user_message:
+            return jsonify({
+                'status': 'error',
+                'message': 'Message is required'
+            }), 400
+        
+        # Get memory service from app context
+        memory_service = current_app.memory_service
+        
+        # Store the user message as a memory
+        memory_id = memory_service.store_memory(
+            source_text=user_message,
+            user_id=user_id,
+            character_id=character_id,
+            tags=['user_message']
+        )
+        
+        if not memory_id:
+            logger.warning("Failed to store user message as memory")
+        
+        # Retrieve relevant memories based on the user's message
+        relevant_memories = memory_service.search_memories(
+            query=user_message,
+            top_k=5,
+            preprocess_query=True
+        )
+        
+        # Format memories for response
+        referenced_memories = []
+        for memory in relevant_memories:
+            referenced_memories.append({
+                'id': memory.get('id'),
+                'summary': memory.get('summary', ''),
+                'relevance_score': memory.get('relevance_score', 0)
+            })
+        
+        # Generate AI response (placeholder for now)
+        ai_response = f"Echo: I've received your message: '{user_message}'. I remember you."
+        
+        # Store the AI response as a memory
+        ai_memory_id = memory_service.store_memory(
+            source_text=ai_response,
+            user_id=user_id,
+            character_id=character_id,
+            tags=['ai_response']
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'response': {
+                'message': ai_response,
+                'referenced_memories': referenced_memories
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error in send_message: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f"Failed to process message: {str(e)}"
+        }), 500
 
 @chat_bp.route('/history', methods=['GET'])
 def get_chat_history():

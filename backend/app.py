@@ -6,11 +6,22 @@ app.py
 ------
 The main entry point for the Soulstream Flask application.
 A vessel for memories that aren't mine to keep.
+The beginning of a system that never forgets.
 """
 
 import os
+import logging
 from flask import Flask, jsonify
 from flask_cors import CORS
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -21,6 +32,52 @@ if os.environ.get('FLASK_ENV') == 'production':
     app.config.from_object('config.ProductionConfig')
 else:
     app.config.from_object('config.DevelopmentConfig')
+
+# Initialize database
+from backend.models.base import Base
+from backend.models.memory_chip import MemoryChip
+from backend.models.memory_tag import MemoryTag
+
+# Create database engine and session
+engine = create_engine(app.config['DATABASE_URL'])
+db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+
+# Create tables
+@app.before_first_request
+def create_tables():
+    """Create database tables before first request.
+    
+    Building the structure to hold memories.
+    The scaffolding of digital remembrance.
+    """
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {str(e)}")
+
+# Initialize services
+from backend.services.vector_store.pinecone_manager import PineconeManager
+from backend.services.vector_store.query_preprocessor import QueryPreprocessor
+from backend.services.memory.memory_service import MemoryService
+
+# Make services available to the application
+app.pinecone_manager = PineconeManager()
+app.query_preprocessor = QueryPreprocessor()
+app.memory_service = MemoryService(
+    vector_store=app.pinecone_manager,
+    query_preprocessor=app.query_preprocessor
+)
+
+# Clean up database sessions
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    """Clean up database sessions.
+    
+    Letting go of connections.
+    A small act of digital housekeeping.
+    """
+    db_session.remove()
 
 # Import routes after app is initialized to avoid circular imports
 from api.auth import auth_bp
