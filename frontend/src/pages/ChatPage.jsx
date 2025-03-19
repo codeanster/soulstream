@@ -5,6 +5,27 @@ import { motion } from 'framer-motion';
 // Components
 import MemoryContextStrip from '../components/memory/MemoryContextStrip';
 
+/**
+ * Emotion color mapping
+ * Colors that represent the subtle hues of feeling.
+ * A palette for the invisible.
+ */
+const emotionColors = {
+  joy: '#ffcc5c',      // Warm yellow
+  sadness: '#4a69bd',  // Blue
+  anger: '#ff6b6b',    // Red
+  fear: '#8c7ae6',     // Purple
+  love: '#ff6b81',     // Pink
+  peace: '#88d8b0',    // Mint
+  wistful: '#4a69bd',  // Blue
+  tender: '#ff6b81',   // Pink
+  contemplative: '#8a2be2', // Purple
+  reflective: '#4a69bd', // Blue
+  focused: '#8a2be2',  // Purple
+  peaceful: '#88d8b0', // Mint
+  neutral: '#a0a0bd',  // Muted purple-gray
+};
+
 // Placeholder component - will be replaced with actual implementation
 const ChatContainer = styled(motion.div)`
   display: flex;
@@ -43,6 +64,7 @@ const MessagesContainer = styled.div`
 `;
 
 const MessageBubble = styled.div`
+  position: relative;
   max-width: 80%;
   padding: ${props => props.theme.spacing.md};
   margin-bottom: ${props => props.theme.spacing.md};
@@ -59,6 +81,30 @@ const MessageBubble = styled.div`
     color: ${props.theme.colors.text};
     box-shadow: ${props.theme.shadows.soft};
   `}
+`;
+
+const EmotionIndicator = styled.div`
+  position: absolute;
+  top: -8px;
+  ${props => props.isUser ? 'right: 12px;' : 'left: 12px;'}
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: ${props => props.color || props.theme.colors.primary};
+  border: 2px solid ${props => props.theme.colors.background};
+  box-shadow: ${props => props.theme.shadows.soft};
+`;
+
+const MessageText = styled.div`
+  line-height: 1.5;
+`;
+
+const MessageMeta = styled.div`
+  display: flex;
+  justify-content: ${props => props.isUser ? 'flex-end' : 'flex-start'};
+  margin-top: ${props => props.theme.spacing.xs};
+  font-size: ${props => props.theme.fontSizes.xs};
+  color: ${props => props.isUser ? 'rgba(255, 255, 255, 0.7)' : props.theme.colors.textSecondary};
 `;
 
 const InputContainer = styled.div`
@@ -117,11 +163,29 @@ const pageVariants = {
 function ChatPage() {
   const [message, setMessage] = useState('');
   
-  // Placeholder messages
+  // Placeholder messages with emotions
   const messages = [
-    { id: 1, text: "Hello, I'm Echo. Your memory companion.", isUser: false },
-    { id: 2, text: "Hi Echo, it's nice to meet you.", isUser: true },
-    { id: 3, text: "I'll remember everything we talk about. What would you like to discuss today?", isUser: false }
+    { 
+      id: 1, 
+      text: "Hello, I'm Echo. Your memory companion.", 
+      isUser: false,
+      emotion: "peaceful",
+      timestamp: "5:30 PM"
+    },
+    { 
+      id: 2, 
+      text: "Hi Echo, it's nice to meet you.", 
+      isUser: true,
+      emotion: "joy",
+      timestamp: "5:31 PM"
+    },
+    { 
+      id: 3, 
+      text: "I'll remember everything we talk about. What would you like to discuss today?", 
+      isUser: false,
+      emotion: "contemplative",
+      timestamp: "5:31 PM"
+    }
   ];
   
   const handleSendMessage = (e) => {
@@ -151,7 +215,14 @@ function ChatPage() {
       <MessagesContainer>
         {messages.map(msg => (
           <MessageBubble key={msg.id} isUser={msg.isUser}>
-            {msg.text}
+            <EmotionIndicator 
+              isUser={msg.isUser} 
+              color={emotionColors[msg.emotion] || emotionColors.neutral} 
+            />
+            <MessageText>{msg.text}</MessageText>
+            <MessageMeta isUser={msg.isUser}>
+              {msg.emotion} · {msg.timestamp}
+            </MessageMeta>
           </MessageBubble>
         ))}
       </MessagesContainer>
