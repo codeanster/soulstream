@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 
+// Components
+import MemoryContextStrip from '../components/memory/MemoryContextStrip';
+
 // Placeholder component - will be replaced with actual implementation
 const ChatContainer = styled(motion.div)`
   display: flex;
@@ -152,6 +155,28 @@ function ChatPage() {
           </MessageBubble>
         ))}
       </MessagesContainer>
+      
+      {/* Memory Context Strip - shows active memories in the conversation */}
+      <MemoryContextStrip 
+        memories={[
+          {
+            id: 101,
+            summary: 'A conversation about dreams',
+            emotion: 'wistful',
+            created_at: '2025-03-15T14:22:10Z',
+            importance_score: 0.85,
+            is_pinned: true
+          },
+          {
+            id: 203,
+            summary: 'A shared moment of quiet understanding',
+            emotion: 'peaceful',
+            created_at: '2025-03-17T19:45:33Z',
+            importance_score: 0.72,
+            is_pinned: false
+          }
+        ]}
+      />
       
       <form onSubmit={handleSendMessage}>
         <InputContainer>

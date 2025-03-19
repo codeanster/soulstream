@@ -15,6 +15,7 @@ import { ThemeContext } from './contexts/ThemeContext';
 import ChatPage from './pages/ChatPage';
 import TimelinePage from './pages/TimelinePage';
 import JournalPage from './pages/JournalPage';
+import MemoryPage from './pages/MemoryPage';
 import SettingsPage from './pages/SettingsPage';
 
 // Components
@@ -72,6 +73,7 @@ function App() {
                     <Route path="/" element={<ChatPage />} />
                     <Route path="/timeline" element={<TimelinePage />} />
                     <Route path="/journal" element={<JournalPage />} />
+                    <Route path="/memory" element={<MemoryPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                   </Routes>
                 </AnimatePresence>

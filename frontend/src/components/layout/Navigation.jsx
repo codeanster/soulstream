@@ -99,6 +99,7 @@ function Navigation() {
     { path: '/', label: 'Chat' },
     { path: '/timeline', label: 'Timeline' },
     { path: '/journal', label: 'Journal' },
+    { path: '/memory', label: 'Memory' },
     { path: '/settings', label: 'Settings' }
   ];
   
