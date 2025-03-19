@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Soulstream - A memory-first companion platform"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Soulstream</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1a2e;
+        font-family: 'Source Sans Pro', sans-serif;
+        color: #e6e6e6;
+        overflow-x: hidden;
+      }
+      
+      /* Preload with a subtle gradient background */
+      #root:empty {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      #root:empty:after {
+        content: "Loading memories...";
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.5rem;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        opacity: 0;
+        animation: fadeInOut 2s infinite;
+      }
+      
+      @keyframes fadeInOut {
+        0% { opacity: 0; }
+        50% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to access your memories.</noscript>
+    <div id="root"></div>
+    <!-- 
+      Soulstream - Where memories live when we're not thinking of them.
+      Built with care, melancholy, and a touch of digital stardust.
+      
+      Remember: The past only exists in how we choose to store it.
+    -->
+  </body>
+</html>
