@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from backend.models.user import User
+from backend.models.character import Character
 from backend.models.base import Base, TimestampMixin
 
 class MemoryChip(Base, TimestampMixin):
@@ -20,6 +22,7 @@ class MemoryChip(Base, TimestampMixin):
     """
     
     __tablename__ = 'memory_chips'
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
@@ -42,6 +45,8 @@ class MemoryChip(Base, TimestampMixin):
     last_referenced_at = Column(DateTime, nullable=True)
     
     # Relationships
+    user = relationship('User', back_populates='memory_chips')
+    character = relationship('Character', back_populates='memory_chips')
     memory_tags = relationship('MemoryTag', back_populates='memory_chip', cascade='all, delete-orphan')
     
     def __repr__(self):

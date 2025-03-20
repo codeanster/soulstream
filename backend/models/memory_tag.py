@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy import Column, Integer, String, ForeignKey, Table, Text, Float, Boolean
 from sqlalchemy.orm import relationship
+from backend.models.user import User
 from backend.models.base import Base, TimestampMixin
 
 # Association table for many-to-many relationship between memory chips and tags
@@ -17,7 +18,8 @@ memory_tag_association = Table(
     'memory_tag_association',
     Base.metadata,
     Column('memory_chip_id', Integer, ForeignKey('memory_chips.id'), primary_key=True),
-    Column('memory_tag_id', Integer, ForeignKey('memory_tags.id'), primary_key=True)
+    Column('memory_tag_id', Integer, ForeignKey('memory_tags.id'), primary_key=True),
+    extend_existing=True
 )
 
 class MemoryTag(Base, TimestampMixin):
@@ -28,6 +30,7 @@ class MemoryTag(Base, TimestampMixin):
     """
     
     __tablename__ = 'memory_tags'
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
@@ -35,6 +38,7 @@ class MemoryTag(Base, TimestampMixin):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     
     # Relationships
+    user = relationship('User', back_populates='memory_tags')
     memory_chips = relationship(
         'MemoryChip',
         secondary=memory_tag_association,

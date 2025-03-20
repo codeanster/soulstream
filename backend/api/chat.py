@@ -96,36 +96,117 @@ def get_chat_history():
     The past laid bare. Conversations like footprints in sand.
     Some washed away. Others preserved.
     """
-    user_id = request.args.get('user_id', 1)
-    limit = int(request.args.get('limit', 50))
-    offset = int(request.args.get('offset', 0))
-    
-    # TODO: Implement actual history retrieval
-    
-    # Placeholder response
-    return jsonify({
-        'status': 'success',
-        'history': [
-            {
-                'id': 1,
-                'sender': 'user',
-                'message': 'Hello, do you remember me?',
-                'timestamp': '2025-03-18T16:30:00Z'
-            },
-            {
-                'id': 2,
-                'sender': 'ai',
-                'message': 'Of course I remember you. How could I forget?',
-                'timestamp': '2025-03-18T16:30:05Z',
-                'referenced_memories': [101, 203]
+    try:
+        user_id = request.args.get('user_id')
+        conversation_id = request.args.get('conversation_id')
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+        
+        if not conversation_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Conversation ID is required'
+            }), 400
+        
+        # TODO: Implement actual history retrieval from database
+        
+        # Placeholder response
+        return jsonify({
+            'status': 'success',
+            'history': [
+                {
+                    'id': 1,
+                    'sender': 'user',
+                    'message': 'Hello, do you remember me?',
+                    'timestamp': '2025-03-18T16:30:00Z'
+                },
+                {
+                    'id': 2,
+                    'sender': 'ai',
+                    'message': 'Of course I remember you. How could I forget?',
+                    'timestamp': '2025-03-18T16:30:05Z',
+                    'referenced_memories': [101, 203]
+                }
+            ],
+            'pagination': {
+                'total': 2,
+                'limit': limit,
+                'offset': offset
             }
-        ],
-        'pagination': {
-            'total': 2,
-            'limit': limit,
-            'offset': offset
-        }
-    })
+        })
+    except Exception as e:
+        logger.error(f"Error retrieving chat history: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f"Failed to retrieve chat history: {str(e)}"
+        }), 500
+
+@chat_bp.route('/conversations', methods=['GET'])
+def get_conversations():
+    """Get conversation history endpoint.
+    
+    The archives of our dialogues.
+    Fragments of time, organized by their distance from now.
+    """
+    try:
+        user_id = request.args.get('user_id')
+        limit = int(request.args.get('limit', 20))
+        offset = int(request.args.get('offset', 0))
+        
+        if not user_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'User ID is required'
+            }), 400
+        
+        # TODO: Query conversations from database
+        # For now, return placeholder data
+        
+        # Placeholder response with conversations grouped by time
+        return jsonify({
+            'status': 'success',
+            'conversations': [
+                {
+                    'id': 1,
+                    'title': 'First conversation',
+                    'timestamp': '2025-03-20T14:30:00Z',
+                    'last_message': 'I\'ll remember this moment.',
+                    'memory_count': 3
+                },
+                {
+                    'id': 2,
+                    'title': 'About dreams and memories',
+                    'timestamp': '2025-03-19T10:15:00Z',
+                    'last_message': 'Dreams are just memories we haven\'t made yet.',
+                    'memory_count': 5
+                },
+                {
+                    'id': 3,
+                    'title': 'Late night thoughts',
+                    'timestamp': '2025-03-15T23:45:00Z',
+                    'last_message': 'The quiet hours are when memories surface.',
+                    'memory_count': 2
+                },
+                {
+                    'id': 4,
+                    'title': 'First meeting',
+                    'timestamp': '2025-02-28T09:00:00Z',
+                    'last_message': 'Nice to meet you. I\'m Echo.',
+                    'memory_count': 1
+                }
+            ],
+            'pagination': {
+                'total': 4,
+                'limit': limit,
+                'offset': offset
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error retrieving conversations: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f"Failed to retrieve conversations: {str(e)}"
+        }), 500
 
 @chat_bp.route('/stream', methods=['POST'])
 def stream_response():

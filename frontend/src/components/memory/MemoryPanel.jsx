@@ -141,24 +141,35 @@ function MemoryPanel({ title = "Memory Fragments" }) {
   
   // Apply filters when memories, emotion filter, or search query changes
   useEffect(() => {
-    if (!memories) return;
+    console.log('Memories in MemoryPanel:', memories);
+    
+    if (!memories || !Array.isArray(memories)) {
+      console.warn('No memories array available or memories is not an array');
+      setFilteredMemories([]);
+      return;
+    }
     
     let filtered = [...memories];
     
     // Apply emotion filter
     if (emotionFilter) {
-      filtered = filtered.filter(memory => memory.emotion === emotionFilter);
+      filtered = filtered.filter(memory => 
+        memory && memory.emotion === emotionFilter
+      );
     }
     
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(memory => 
-        memory.summary.toLowerCase().includes(query) || 
-        (memory.topic && memory.topic.toLowerCase().includes(query))
+        memory && (
+          (memory.summary && memory.summary.toLowerCase().includes(query)) || 
+          (memory.topic && memory.topic.toLowerCase().includes(query))
+        )
       );
     }
     
+    console.log('Filtered memories:', filtered);
     setFilteredMemories(filtered);
   }, [memories, emotionFilter, searchQuery]);
   
@@ -171,9 +182,13 @@ function MemoryPanel({ title = "Memory Fragments" }) {
   };
   
   // Get unique emotions for filter dropdown
-  const uniqueEmotions = memories 
-    ? [...new Set(memories.map(memory => memory.emotion))]
+  const uniqueEmotions = memories && Array.isArray(memories)
+    ? [...new Set(memories
+        .filter(memory => memory && memory.emotion)
+        .map(memory => memory.emotion))]
     : [];
+  
+  console.log('Unique emotions:', uniqueEmotions);
   
   return (
     <PanelContainer
