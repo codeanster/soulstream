@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useCallback } from 'react';
-import axios from 'axios';
+import { memoryService } from '../services/memoryService';
 import { useAuth } from './AuthContext';
 
 /**
@@ -23,22 +23,29 @@ export function MemoryProvider({ children }) {
   
   // Fetch memory chips
   const fetchMemories = useCallback(async (filters = {}) => {
-    if (!currentUser) return [];
-    
     try {
       setLoading(true);
       setError(null);
       
+      // Only add user_id if currentUser exists
       const params = {
-        user_id: currentUser.id,
         ...filters
       };
       
-      const response = await axios.get('/api/memory/chips', { params });
+      if (currentUser && currentUser.id) {
+        params.user_id = currentUser.id;
+      }
       
-      if (response.data.status === 'success') {
-        setMemories(response.data.memories);
-        return response.data.memories;
+      console.log('Fetching memories with params:', params);
+      const data = await memoryService.fetchMemories(params);
+      console.log('Memory API response:', data);
+      
+      if (data.status === 'success') {
+        setMemories(data.memories || []);
+        console.log('Memories set in state:', data.memories);
+        return data.memories || [];
+      } else {
+        console.error('API returned non-success status:', data);
       }
       
       return [];
@@ -59,15 +66,10 @@ export function MemoryProvider({ children }) {
       setLoading(true);
       setError(null);
       
-      const params = {
-        user_id: currentUser.id,
-        query
-      };
+      const data = await memoryService.searchMemories(query);
       
-      const response = await axios.get('/api/memory/search', { params });
-      
-      if (response.data.status === 'success') {
-        return response.data.results;
+      if (data.status === 'success') {
+        return data.results;
       }
       
       return [];
@@ -88,11 +90,9 @@ export function MemoryProvider({ children }) {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post('/api/memory/pin', { 
-        memory_id: memoryId 
-      });
+      const data = await memoryService.pinMemory(memoryId);
       
-      if (response.data.status === 'success') {
+      if (data.status === 'success') {
         // Update local state
         setMemories(prevMemories => 
           prevMemories.map(memory => 
@@ -123,11 +123,9 @@ export function MemoryProvider({ children }) {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post('/api/memory/forget', { 
-        memory_id: memoryId 
-      });
+      const data = await memoryService.forgetMemory(memoryId);
       
-      if (response.data.status === 'success') {
+      if (data.status === 'success') {
         // Update local state
         setMemories(prevMemories => 
           prevMemories.filter(memory => memory.id !== memoryId)

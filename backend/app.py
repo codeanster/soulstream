@@ -35,6 +35,8 @@ else:
 
 # Initialize database
 from backend.models.base import Base
+from backend.models.user import User
+from backend.models.character import Character
 from backend.models.memory_chip import MemoryChip
 from backend.models.memory_tag import MemoryTag
 
@@ -42,10 +44,9 @@ from backend.models.memory_tag import MemoryTag
 engine = create_engine(app.config['DATABASE_URL'])
 db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
-# Create tables
-@app.before_first_request
+# Create database tables manually
 def create_tables():
-    """Create database tables before first request.
+    """Create database tables before starting the app.
     
     Building the structure to hold memories.
     The scaffolding of digital remembrance.
@@ -80,11 +81,11 @@ def shutdown_session(exception=None):
     db_session.remove()
 
 # Import routes after app is initialized to avoid circular imports
-from api.auth import auth_bp
-from api.chat import chat_bp
-from api.memory import memory_bp
-from api.timeline import timeline_bp
-from api.journal import journal_bp
+from backend.api.auth import auth_bp
+from backend.api.chat import chat_bp
+from backend.api.memory import memory_bp
+from backend.api.timeline import timeline_bp
+from backend.api.journal import journal_bp
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -105,4 +106,5 @@ def health_check():
     })
 
 if __name__ == '__main__':
+    create_tables()
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)

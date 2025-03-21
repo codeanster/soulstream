@@ -18,9 +18,9 @@ memory_bp = Blueprint('memory', __name__)
 # Initialize memory service
 memory_service = None
 
-@memory_bp.before_app_first_request
-def initialize_memory_service():
-    """Initialize the memory service before the first request.
+@memory_bp.record_once
+def initialize_memory_service(state):
+    """Initialize the memory service when the blueprint is registered.
     
     Preparing the infrastructure of remembrance.
     Setting up the systems that will preserve what matters.
@@ -52,6 +52,9 @@ def get_memory_chips():
         if topic:
             filter_dict['topic'] = topic
         
+        # Log the request parameters for debugging
+        logger.info(f"Memory chips request - filter: {filter_dict}, limit: {limit}, offset: {offset}")
+        
         # Use memory service to search with empty query (returns all memories)
         memories = memory_service.search_memories(
             query="",  # Empty query to get all memories
@@ -60,8 +63,14 @@ def get_memory_chips():
             preprocess_query=False  # No need to preprocess an empty query
         )
         
+        # Log the results for debugging
+        logger.info(f"Memory search returned {len(memories)} results")
+        
         # Apply pagination
         paginated_memories = memories[offset:offset + limit]
+        
+        # Log the response for debugging
+        logger.info(f"Returning {len(paginated_memories)} paginated memories")
         
         return jsonify({
             'status': 'success',

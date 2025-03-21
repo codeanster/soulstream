@@ -29,7 +29,7 @@ const DetailContainer = styled(motion.div)`
     left: 0;
     right: 0;
     height: 6px;
-    background: ${props => props.emotionColor || props.theme.colors.primary};
+    background: ${props => props.$emotionColor || props.theme.colors.primary};
     border-radius: ${props => props.theme.borderRadius.lg} ${props => props.theme.borderRadius.lg} 0 0;
   }
 `;
@@ -114,7 +114,7 @@ const MetadataValue = styled.span`
 const EmotionTag = styled.span`
   display: inline-block;
   padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
-  background: ${props => props.color || props.theme.colors.primary};
+  background: ${props => props.$color || props.theme.colors.primary};
   color: white;
   border-radius: ${props => props.theme.borderRadius.sm};
   font-size: ${props => props.theme.fontSizes.xs};
@@ -129,17 +129,17 @@ const ActionButtons = styled.div`
 `;
 
 const ActionButton = styled.button`
-  background: ${props => props.danger 
+  background: ${props => props.$danger 
     ? props.theme.colors.error 
-    : props.primary 
+    : props.$primary 
       ? props.theme.colors.primary 
       : 'transparent'
   };
-  color: ${props => props.primary || props.danger 
+  color: ${props => props.$primary || props.$danger 
     ? 'white' 
     : props.theme.colors.text
   };
-  border: ${props => props.primary || props.danger 
+  border: ${props => props.$primary || props.$danger 
     ? 'none' 
     : `1px solid ${props.theme.colors.textSecondary}`
   };
@@ -150,9 +150,9 @@ const ActionButton = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.danger 
+    background: ${props => props.$danger 
       ? props.theme.colors.error + 'dd'
-      : props.primary 
+      : props.$primary 
         ? props.theme.colors.primary + 'dd' 
         : props.theme.colors.background
     };
@@ -212,7 +212,7 @@ function MemoryDetail({ memory, onClose }) {
   
   return (
     <DetailContainer
-      emotionColor={emotionColor}
+      $emotionColor={emotionColor}
       variants={detailVariants}
       initial="hidden"
       animate="visible"
@@ -224,11 +224,11 @@ function MemoryDetail({ memory, onClose }) {
       <DetailHeader>
         <DetailTitle>{memory.summary}</DetailTitle>
         <DetailDate>{formatDate(memory.created_at)}</DetailDate>
-        <EmotionTag color={emotionColor}>
+        <EmotionTag $color={emotionColor}>
           {memory.emotion}
         </EmotionTag>
         {memory.topic && (
-          <EmotionTag color="#4a69bd">
+          <EmotionTag $color="#4a69bd">
             {memory.topic}
           </EmotionTag>
         )}
@@ -270,7 +270,7 @@ function MemoryDetail({ memory, onClose }) {
       
       <ActionButtons>
         {!memory.is_pinned && (
-          <ActionButton onClick={handlePin} primary>
+          <ActionButton onClick={handlePin} $primary>
             Pin Memory
           </ActionButton>
         )}
@@ -279,7 +279,7 @@ function MemoryDetail({ memory, onClose }) {
             Unpin Memory
           </ActionButton>
         )}
-        <ActionButton onClick={handleForget} danger>
+        <ActionButton onClick={handleForget} $danger>
           Forget Memory
         </ActionButton>
       </ActionButtons>
@@ -289,8 +289,8 @@ function MemoryDetail({ memory, onClose }) {
 
 MemoryDetail.propTypes = {
   memory: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    summary: PropTypes.string.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    summary: PropTypes.string,
     source_text: PropTypes.string,
     emotion: PropTypes.string,
     topic: PropTypes.string,

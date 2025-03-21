@@ -44,6 +44,16 @@ const pageVariants = {
 };
 
 function MemoryPage() {
+  // Add useEffect to log when the page is mounted
+  React.useEffect(() => {
+    console.log('MemoryPage mounted');
+    
+    // Return cleanup function
+    return () => {
+      console.log('MemoryPage unmounted');
+    };
+  }, []);
+  
   return (
     <PageContainer
       initial="initial"

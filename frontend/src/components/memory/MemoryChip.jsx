@@ -32,11 +32,11 @@ const ChipContainer = styled(motion.div)`
     left: 0;
     right: 0;
     height: 4px;
-    background: ${props => props.emotionColor || props.theme.colors.primary};
+    background: ${props => props.$emotionColor || props.theme.colors.primary};
     border-radius: ${props => props.theme.borderRadius.lg} ${props => props.theme.borderRadius.lg} 0 0;
   }
   
-  ${props => props.isPinned && `
+  ${props => props.$isPinned && `
     &::after {
       content: '📌';
       position: absolute;
@@ -69,7 +69,7 @@ const ChipDate = styled.span`
 const EmotionTag = styled.span`
   display: inline-block;
   padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
-  background: ${props => props.color || props.theme.colors.primary};
+  background: ${props => props.$color || props.theme.colors.primary};
   color: white;
   border-radius: ${props => props.theme.borderRadius.sm};
   font-size: ${props => props.theme.fontSizes.xs};
@@ -83,7 +83,7 @@ const ImportanceIndicator = styled.div`
   height: 8px;
   border-radius: 50%;
   background: ${props => {
-    const score = props.score || 0;
+    const score = props.$score || 0;
     if (score > 0.7) return props.theme.colors.accent;
     if (score > 0.4) return props.theme.colors.info;
     return props.theme.colors.textSecondary;
@@ -118,22 +118,35 @@ function MemoryChip({
   onClick,
   delay = 0
 }) {
+  // Add console logging to see what memory data we're receiving
+  console.log('Memory data in MemoryChip:', memory);
+  
   const emotionColor = emotionColors[memory.emotion] || '#8a2be2';
   
-  // Format date for display
+  // Format date for display - handle both timestamp and created_at
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
+    if (!dateString) return 'Unknown date';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (err) {
+      console.error('Date formatting error:', err);
+      return 'Invalid date';
+    }
   };
+  
+  // Get the date string, preferring timestamp if available, falling back to created_at
+  const dateString = memory.timestamp || memory.created_at;
   
   return (
     <ChipContainer 
-      emotionColor={emotionColor}
-      isPinned={memory.is_pinned}
+      $emotionColor={emotionColor}
+      $isPinned={memory.is_pinned}
       onClick={() => onClick(memory)}
       variants={chipVariants}
       initial="hidden"
@@ -143,24 +156,25 @@ function MemoryChip({
         delay: delay * 0.1
       }}
     >
-      <ChipSummary>{memory.summary}</ChipSummary>
+      <ChipSummary>{memory.id || 'Unknown ID'}</ChipSummary>
       <ChipMetadata>
-        <ChipDate>{formatDate(memory.created_at)}</ChipDate>
-        <EmotionTag color={emotionColor}>
-          {memory.emotion}
+        <ChipDate>{formatDate(dateString)}</ChipDate>
+        <EmotionTag $color={emotionColor}>
+          {memory.emotion || 'neutral'}
         </EmotionTag>
       </ChipMetadata>
-      <ImportanceIndicator score={memory.importance_score} />
+      <ImportanceIndicator $score={memory.importance_score} />
     </ChipContainer>
   );
 }
 
 MemoryChip.propTypes = {
   memory: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    summary: PropTypes.string.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    summary: PropTypes.string,
     emotion: PropTypes.string,
-    created_at: PropTypes.string.isRequired,
+    created_at: PropTypes.string,
+    timestamp: PropTypes.string,
     importance_score: PropTypes.number,
     is_pinned: PropTypes.bool
   }).isRequired,
