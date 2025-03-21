@@ -48,6 +48,11 @@ class MemoryChip(Base, TimestampMixin):
     user = relationship('User', back_populates='memory_chips')
     character = relationship('Character', back_populates='memory_chips')
     memory_tags = relationship('MemoryTag', back_populates='memory_chip', cascade='all, delete-orphan')
+    timeline_entries = relationship(
+        'TimelineEntry',
+        secondary='timeline_memory_links',
+        back_populates='memory_chips'
+    )
     
     def __repr__(self):
         """String representation of the memory chip.
