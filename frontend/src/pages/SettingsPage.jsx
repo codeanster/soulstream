@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 // Styled components
 const SettingsContainer = styled(motion.div)`
@@ -176,11 +176,19 @@ const pageVariants = {
  */
 function SettingsPage() {
   const { currentUser } = useAuth();
-  const { darkMode, toggleTheme } = useTheme();
+  const { 
+    darkMode, 
+    voiceMode, 
+    maxMemoryStorage,
+    characterPerspective,
+    timelineLayout,
+    toggleDarkMode,
+    updateSettings,
+    updateTimelineLayout
+  } = useSettings();
   
-  // Placeholder state for settings
+  // Placeholder state for settings not yet in the API
   const [narrativeMode, setNarrativeMode] = useState(true);
-  const [voiceStyle, setVoiceStyle] = useState('poetic');
   const [autoSummarize, setAutoSummarize] = useState(true);
   const [memoryRetention, setMemoryRetention] = useState('standard');
   
@@ -210,7 +218,7 @@ function SettingsPage() {
               type="checkbox" 
               id="darkMode" 
               checked={darkMode}
-              onChange={toggleTheme}
+              onChange={toggleDarkMode}
             />
             <ToggleSlider />
           </Toggle>
@@ -239,13 +247,28 @@ function SettingsPage() {
           </div>
           <Select 
             id="voiceStyle" 
-            value={voiceStyle}
-            onChange={(e) => setVoiceStyle(e.target.value)}
+            value={voiceMode}
+            onChange={(e) => updateSettings({ voice_mode: e.target.value })}
           >
             <option value="poetic">Poetic</option>
             <option value="analytical">Analytical</option>
             <option value="conversational">Conversational</option>
             <option value="philosophical">Philosophical</option>
+          </Select>
+        </SettingRow>
+        
+        <SettingRow>
+          <div>
+            <SettingLabel htmlFor="timelineLayout">Timeline Layout</SettingLabel>
+            <SettingDescription>Choose between vertical or horizontal timeline view.</SettingDescription>
+          </div>
+          <Select 
+            id="timelineLayout" 
+            value={timelineLayout}
+            onChange={(e) => updateTimelineLayout(e.target.value)}
+          >
+            <option value="vertical">Vertical</option>
+            <option value="horizontal">Horizontal</option>
           </Select>
         </SettingRow>
       </SettingsSection>

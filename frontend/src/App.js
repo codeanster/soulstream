@@ -9,7 +9,7 @@ import { theme } from './styles/theme';
 // Contexts
 import { AuthProvider } from './contexts/AuthContext';
 import { MemoryProvider } from './contexts/MemoryContext';
-import { ThemeContext } from './contexts/ThemeContext';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 
 // Pages
 import ChatPage from './pages/ChatPage';
@@ -46,42 +46,43 @@ const ContentContainer = styled.main`
  */
 function App() {
   const location = useLocation();
-  const [darkMode, setDarkMode] = useState(true);
-  
-  // Toggle dark/light mode
-  const toggleTheme = () => {
-    setDarkMode(!darkMode);
+  // Apply theme to body based on settings
+  const AppContent = () => {
+    const { darkMode } = useSettings();
+    
+    useEffect(() => {
+      document.body.style.backgroundColor = darkMode 
+        ? theme.colors.background 
+        : theme.colors.backgroundLight;
+    }, [darkMode]);
+    
+    return (
+      <AppContainer>
+        <Navigation />
+        <ContentContainer>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<ChatPage />} />
+              <Route path="/timeline" element={<TimelinePage />} />
+              <Route path="/journal" element={<JournalPage />} />
+              <Route path="/memory" element={<MemoryPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
+          </AnimatePresence>
+        </ContentContainer>
+      </AppContainer>
+    );
   };
-  
-  // Apply theme to body
-  useEffect(() => {
-    document.body.style.backgroundColor = darkMode 
-      ? theme.colors.background 
-      : theme.colors.backgroundLight;
-  }, [darkMode]);
 
   return (
     <ThemeProvider theme={theme}>
-      <ThemeContext.Provider value={{ darkMode, toggleTheme }}>
-        <AuthProvider>
+      <AuthProvider>
+        <SettingsProvider>
           <MemoryProvider>
-            <AppContainer>
-              <Navigation />
-              <ContentContainer>
-                <AnimatePresence mode="wait">
-                  <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<ChatPage />} />
-                    <Route path="/timeline" element={<TimelinePage />} />
-                    <Route path="/journal" element={<JournalPage />} />
-                    <Route path="/memory" element={<MemoryPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                  </Routes>
-                </AnimatePresence>
-              </ContentContainer>
-            </AppContainer>
+            <AppContent />
           </MemoryProvider>
-        </AuthProvider>
-      </ThemeContext.Provider>
+        </SettingsProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

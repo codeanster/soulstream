@@ -107,10 +107,29 @@ const SecondaryEmotionDot = styled.div`
   margin-right: ${props => props.theme.spacing.xs};
 `;
 
-// Animation variants
+// Animation variants with spring physics for more natural motion
 const tooltipVariants = {
-  hidden: { opacity: 0, scale: 0.8, y: 10 },
-  visible: { opacity: 1, scale: 1, y: 0 }
+  hidden: { 
+    opacity: 0, 
+    scale: 0.8, 
+    y: 10,
+    transition: {
+      type: 'spring',
+      stiffness: 500,
+      damping: 30
+    }
+  },
+  visible: { 
+    opacity: 1, 
+    scale: 1, 
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 500,
+      damping: 25,
+      mass: 0.5
+    }
+  }
 };
 
 /**
@@ -170,7 +189,12 @@ const EmotionTooltip = ({ emotion, intensity = 0.5, secondaryEmotions = [], styl
       initial="hidden"
       animate="visible"
       exit="hidden"
-      transition={{ duration: 0.2 }}
+      transition={{ 
+        type: 'spring',
+        stiffness: 500,
+        damping: 25,
+        mass: 0.5
+      }}
     >
       <EmotionHeader>
         <EmotionIcon color={primaryColor} />
@@ -189,14 +213,25 @@ const EmotionTooltip = ({ emotion, intensity = 0.5, secondaryEmotions = [], styl
           <SecondaryEmotionsLabel>Secondary Emotions</SecondaryEmotionsLabel>
           <SecondaryEmotionsList>
             {secondaryEmotions.map((secondaryEmotion, index) => (
-              <SecondaryEmotion 
+              <motion.div
                 key={index}
-                color={getEmotionColor(secondaryEmotion.name)}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  delay: 0.1 + index * 0.05,
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 30
+                }}
               >
-                <SecondaryEmotionDot color={getEmotionColor(secondaryEmotion.name)} />
-                {secondaryEmotion.name}
-                {secondaryEmotion.intensity && ` (${Math.round(secondaryEmotion.intensity * 100)}%)`}
-              </SecondaryEmotion>
+                <SecondaryEmotion 
+                  color={getEmotionColor(secondaryEmotion.name)}
+                >
+                  <SecondaryEmotionDot color={getEmotionColor(secondaryEmotion.name)} />
+                  {secondaryEmotion.name}
+                  {secondaryEmotion.intensity && ` (${Math.round(secondaryEmotion.intensity * 100)}%)`}
+                </SecondaryEmotion>
+              </motion.div>
             ))}
           </SecondaryEmotionsList>
         </SecondaryEmotionsContainer>

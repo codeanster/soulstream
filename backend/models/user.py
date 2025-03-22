@@ -33,6 +33,7 @@ class User(Base, TimestampMixin):
     memory_chips = relationship('MemoryChip', back_populates='user', cascade='all, delete-orphan')
     memory_tags = relationship('MemoryTag', back_populates='user', cascade='all, delete-orphan')
     timeline_entries = relationship('TimelineEntry', back_populates='user', cascade='all, delete-orphan')
+    settings = relationship('Settings', back_populates='user', uselist=False, cascade='all, delete-orphan')
     
     def __repr__(self):
         """String representation of the user.
