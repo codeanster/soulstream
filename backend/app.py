@@ -89,6 +89,7 @@ from backend.api.chat import chat_bp
 from backend.api.memory import memory_bp
 from backend.api.timeline import timeline_bp
 from backend.api.journal import journal_bp
+from backend.api.settings import settings_bp
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -96,6 +97,7 @@ app.register_blueprint(chat_bp, url_prefix='/api/chat')
 app.register_blueprint(memory_bp, url_prefix='/api/memory')
 app.register_blueprint(timeline_bp, url_prefix='/api/timeline')
 app.register_blueprint(journal_bp, url_prefix='/api/journal')
+app.register_blueprint(settings_bp, url_prefix='/api/settings')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

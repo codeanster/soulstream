@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import EmotionTooltip from './EmotionTooltip';
@@ -125,7 +125,7 @@ const DateDisplay = styled.div`
   margin-bottom: ${props => props.theme.spacing.xs};
 `;
 
-const EmotionTag = styled.span`
+const EmotionTag = styled(motion.span)`
   display: inline-block;
   padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
   background: ${props => props.color || props.theme.colors.primary};
@@ -160,7 +160,7 @@ const TooltipContainer = styled.div`
   }
 `;
 
-const NavigationButton = styled.button`
+const NavigationButton = styled(motion.button)`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -178,6 +178,11 @@ const NavigationButton = styled.button`
   
   &:hover {
     background: ${props => props.theme.colors.background};
+    transform: translateY(-50%) scale(1.1);
+  }
+  
+  &:active {
+    transform: translateY(-50%) scale(0.95);
   }
   
   &:disabled {
@@ -245,6 +250,114 @@ const HorizontalTimeline = ({ entries = [] }) => {
   const [activeTooltip, setActiveTooltip] = useState(null);
   const containerRef = useRef(null);
   
+  // Enhanced scroll handling with momentum
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const container = containerRef.current;
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    let velocity = 0;
+    let animationFrame;
+    
+    const handleMouseDown = (e) => {
+      isDown = true;
+      container.classList.add('active');
+      startX = e.pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
+      cancelMomentumTracking();
+    };
+    
+    const handleMouseLeave = () => {
+      if (!isDown) return;
+      isDown = false;
+      container.classList.remove('active');
+      beginMomentumTracking();
+    };
+    
+    const handleMouseUp = () => {
+      if (!isDown) return;
+      isDown = false;
+      container.classList.remove('active');
+      beginMomentumTracking();
+    };
+    
+    const handleMouseMove = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - container.offsetLeft;
+      const walk = (x - startX) * 2; // Scroll speed
+      const newScrollLeft = scrollLeft - walk;
+      container.scrollLeft = newScrollLeft;
+      velocity = scrollLeft - newScrollLeft;
+    };
+    
+    // Momentum scrolling
+    const beginMomentumTracking = () => {
+      cancelMomentumTracking();
+      animationFrame = requestAnimationFrame(momentumLoop);
+    };
+    
+    const cancelMomentumTracking = () => {
+      cancelAnimationFrame(animationFrame);
+    };
+    
+    const momentumLoop = () => {
+      if (Math.abs(velocity) > 0.5) {
+        container.scrollLeft += velocity * 0.95; // Apply friction
+        velocity *= 0.95; // Reduce velocity with friction
+        animationFrame = requestAnimationFrame(momentumLoop);
+      }
+    };
+    
+    // Touch events for mobile
+    const handleTouchStart = (e) => {
+      startX = e.touches[0].pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
+      isDown = true;
+      cancelMomentumTracking();
+    };
+    
+    const handleTouchMove = (e) => {
+      if (!isDown) return;
+      const x = e.touches[0].pageX - container.offsetLeft;
+      const walk = (x - startX) * 2;
+      const newScrollLeft = scrollLeft - walk;
+      container.scrollLeft = newScrollLeft;
+      velocity = scrollLeft - newScrollLeft;
+    };
+    
+    const handleTouchEnd = () => {
+      isDown = false;
+      beginMomentumTracking();
+    };
+    
+    // Add event listeners
+    container.addEventListener('mousedown', handleMouseDown);
+    container.addEventListener('mouseleave', handleMouseLeave);
+    container.addEventListener('mouseup', handleMouseUp);
+    container.addEventListener('mousemove', handleMouseMove);
+    
+    container.addEventListener('touchstart', handleTouchStart);
+    container.addEventListener('touchmove', handleTouchMove);
+    container.addEventListener('touchend', handleTouchEnd);
+    
+    return () => {
+      // Remove event listeners
+      container.removeEventListener('mousedown', handleMouseDown);
+      container.removeEventListener('mouseleave', handleMouseLeave);
+      container.removeEventListener('mouseup', handleMouseUp);
+      container.removeEventListener('mousemove', handleMouseMove);
+      
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+      
+      cancelMomentumTracking();
+    };
+  }, []);
+  
   const handleScroll = (direction) => {
     if (containerRef.current) {
       const scrollAmount = 300; // Adjust as needed
@@ -268,6 +381,8 @@ const HorizontalTimeline = ({ entries = [] }) => {
         className="prev" 
         onClick={() => handleScroll('left')}
         aria-label="Scroll timeline left"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
       >
         ←
       </NavigationButton>
@@ -293,7 +408,13 @@ const HorizontalTimeline = ({ entries = [] }) => {
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"
-                  transition={{ delay: index * 0.1, duration: 0.3 }}
+                  transition={{ 
+                    delay: index * 0.1, 
+                    duration: 0.3,
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 25
+                  }}
                 >
                   <DateDisplay>{formattedDate}</DateDisplay>
                   <h3>{entry.title}</h3>
@@ -308,12 +429,13 @@ const HorizontalTimeline = ({ entries = [] }) => {
                       onBlur={() => setActiveTooltip(null)}
                       tabIndex={0}
                       aria-label={`${entry.emotion} emotion with intensity ${Math.round(entry.emotion_intensity * 100)}%`}
+                      whileHover={{ scale: 1.05 }}
                     >
                       {entry.emotion}
                     </EmotionTag>
                     
                     {entry.milestone_flag && (
-                      <MilestoneTag>milestone</MilestoneTag>
+                      <MilestoneTag whileHover={{ scale: 1.05 }}>milestone</MilestoneTag>
                     )}
                     
                     <AnimatePresence>
@@ -339,6 +461,8 @@ const HorizontalTimeline = ({ entries = [] }) => {
         className="next" 
         onClick={() => handleScroll('right')}
         aria-label="Scroll timeline right"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
       >
         →
       </NavigationButton>

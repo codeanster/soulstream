@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import TimelineNode from '../components/timeline/TimelineNode';
 import HorizontalTimeline from '../components/timeline/HorizontalTimeline';
 import { timelineService } from '../services/timelineService';
+import { useSettings } from '../contexts/SettingsContext';
 
 // Styled components
 const TimelineContainer = styled(motion.div)`
@@ -229,7 +230,8 @@ function TimelinePage() {
   const [showMilestonesOnly, setShowMilestonesOnly] = useState(false);
   const [dateRange, setDateRange] = useState('all');
   const [filteredData, setFilteredData] = useState([]);
-  const [isHorizontalLayout, setIsHorizontalLayout] = useState(false);
+  const { timelineLayout, updateTimelineLayout } = useSettings();
+  const isHorizontalLayout = timelineLayout === 'horizontal';
   const [userId, setUserId] = useState(1); // Default to user 1 for testing
   
   // Fetch timeline data
@@ -339,10 +341,7 @@ function TimelinePage() {
     setDateRange('all');
   };
   
-  // Toggle layout
-  const toggleLayout = () => {
-    setIsHorizontalLayout(!isHorizontalLayout);
-  };
+  // No longer need toggleLayout function as we're using updateTimelineLayout from SettingsContext
   
   if (loading) {
     return (
@@ -436,7 +435,7 @@ function TimelinePage() {
               type="checkbox" 
               id="horizontal-layout" 
               checked={isHorizontalLayout}
-              onChange={toggleLayout}
+              onChange={() => updateTimelineLayout(isHorizontalLayout ? 'vertical' : 'horizontal')}
             />
             <CheckboxLabel htmlFor="horizontal-layout">
               Horizontal layout
@@ -449,18 +448,36 @@ function TimelinePage() {
         </ResetButton>
       </FilterBar>
       
-      {isHorizontalLayout ? (
-        <HorizontalTimeline entries={filteredData.length > 0 ? filteredData : timelineData} />
-      ) : (
-        <TimelineStream>
-          {(filteredData.length > 0 ? filteredData : timelineData).map((entry) => (
-            <TimelineNode 
-              key={entry.id} 
-              entry={entry}
-            />
-          ))}
-        </TimelineStream>
-      )}
+      <AnimatePresence mode="wait">
+        {isHorizontalLayout ? (
+          <motion.div
+            key="horizontal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <HorizontalTimeline entries={filteredData.length > 0 ? filteredData : timelineData} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="vertical"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TimelineStream>
+              {(filteredData.length > 0 ? filteredData : timelineData).map((entry, index) => (
+                <TimelineNode 
+                  key={entry.id} 
+                  entry={entry}
+                />
+              ))}
+            </TimelineStream>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </TimelineContainer>
   );
 }
