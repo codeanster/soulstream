@@ -68,13 +68,14 @@ const NodeMarker = styled.div`
   left: 50%;
   width: 20px;
   height: 20px;
-  background: ${props => props.isMilestone ? props.theme.colors.accent : props.color || props.theme.colors.primary};
+  background: ${props => props.$isMilestone ? props.theme.colors.accent : props.color || props.theme.colors.primary};
   border-radius: 50%;
   transform: translateX(-50%);
   box-shadow: ${props => props.theme.shadows.glow};
   z-index: 2;
   cursor: pointer;
   transition: transform 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.2);
   
   &:hover {
     transform: translateX(-50%) scale(1.2);
@@ -150,6 +151,13 @@ const TooltipContainer = styled.div`
   transform: translateX(-50%);
   margin-bottom: ${props => props.theme.spacing.xs};
   z-index: 100;
+  
+  /* Ensure tooltip doesn't get cut off at screen edges */
+  @media (max-width: 768px) {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
 `;
 
 const NavigationButton = styled.button`
@@ -278,7 +286,7 @@ const HorizontalTimeline = ({ entries = [] }) => {
               <NodeWrapper key={entry.id || index}>
                 <NodeMarker 
                   color={emotionColor}
-                  isMilestone={entry.milestone_flag}
+                  $isMilestone={entry.milestone_flag}
                 />
                 
                 <ContentCard
