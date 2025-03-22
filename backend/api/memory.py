@@ -9,6 +9,8 @@ The interface between thought and recollection.
 import logging
 from flask import Blueprint, request, jsonify, current_app
 from backend.services.memory.memory_service import MemoryService
+from backend.models.memory_chip import MemoryChip
+from sqlalchemy import desc
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -37,13 +39,13 @@ def get_memory_chips():
     Each one a universe of context and feeling.
     """
     try:
-        user_id = request.args.get('user_id')
+        user_id = request.args.get('user_id', 1)
         limit = int(request.args.get('limit', 20))
         offset = int(request.args.get('offset', 0))
         emotion = request.args.get('emotion')
         topic = request.args.get('topic')
         
-        # Build filter dictionary
+        # Build filter dictionary for logging
         filter_dict = {}
         if user_id:
             filter_dict['user_id'] = int(user_id)
@@ -55,28 +57,58 @@ def get_memory_chips():
         # Log the request parameters for debugging
         logger.info(f"Memory chips request - filter: {filter_dict}, limit: {limit}, offset: {offset}")
         
-        # Use memory service to search with empty query (returns all memories)
-        memories = memory_service.search_memories(
-            query="",  # Empty query to get all memories
-            top_k=limit,
-            filter_dict=filter_dict if filter_dict else None,
-            preprocess_query=False  # No need to preprocess an empty query
-        )
+        # Get database session
+        db_session = current_app.db_session
         
-        # Log the results for debugging
-        logger.info(f"Memory search returned {len(memories)} results")
+        # Build query
+        query = db_session.query(MemoryChip)
+        
+        # Apply filters
+        if user_id:
+            query = query.filter(MemoryChip.user_id == int(user_id))
+        if emotion:
+            query = query.filter(MemoryChip.emotion == emotion)
+        if topic:
+            query = query.filter(MemoryChip.topic == topic)
+        
+        # Order by most recent first
+        query = query.order_by(desc(MemoryChip.created_at))
+        
+        # Get total count for pagination
+        total_count = query.count()
         
         # Apply pagination
-        paginated_memories = memories[offset:offset + limit]
+        query = query.limit(limit).offset(offset)
         
-        # Log the response for debugging
-        logger.info(f"Returning {len(paginated_memories)} paginated memories")
+        # Execute query
+        memory_chips = query.all()
+        
+        # Format results
+        formatted_memories = []
+        for chip in memory_chips:
+            formatted_memories.append({
+                'id': str(chip.id),
+                'source_text': chip.source_text,
+                'summary': chip.summary,
+                'emotion': chip.emotion,
+                'topic': chip.topic,
+                'importance_score': chip.importance_score,
+                'is_pinned': chip.is_pinned,
+                'tags': chip.tags,
+                'timestamp': chip.created_at.isoformat() if chip.created_at else None,
+                'user_id': chip.user_id,
+                'character_id': chip.character_id
+            })
+        
+        # Log the results for debugging
+        logger.info(f"Memory search returned {len(formatted_memories)} results")
+        logger.info(f"Returning {len(formatted_memories)} paginated memories")
         
         return jsonify({
             'status': 'success',
-            'memories': paginated_memories,
+            'memories': formatted_memories,
             'pagination': {
-                'total': len(memories),
+                'total': total_count,
                 'limit': limit,
                 'offset': offset
             }
