@@ -83,16 +83,31 @@ We'll break the database into these main tables:
 
 ### 🕰️ `timeline_entries`
 
+| Field              | Type         | Notes |
+|--------------------|--------------|-------|
+| `id`               | INT (PK)     | Auto-increment |
+| `user_id`          | INT (FK)     | References users.id |
+| `date`             | DATE         | One entry per day |
+| `title`            | VARCHAR(100) | Generated from highlight |
+| `mood`             | VARCHAR(20)  | e.g. "neutral", "happy", "lonely" |
+| `entry_summary`    | TEXT         | Short overview of the day |
+| `emotion`          | VARCHAR(20)  | Primary emotion (e.g. "joy", "sadness") |
+| `emotion_intensity`| FLOAT        | 0.0 to 1.0 for emotion strength |
+| `secondary_emotions`| JSON        | Array of {name, intensity} objects |
+| `milestone_flag`   | BOOLEAN      | Whether this is a major event |
+| `created_at`       | DATETIME     | When the entry was created |
+| `updated_at`       | DATETIME     | When the entry was last updated |
+
+---
+
+### 🔄 `timeline_memory_links`
+
 | Field          | Type         | Notes |
 |----------------|--------------|-------|
-| `id`           | INT (PK)     | — |
-| `user_id`      | INT (FK)     | — |
-| `date`         | DATE         | One entry per day |
-| `title`        | VARCHAR(100) | Generated from highlight |
-| `mood`         | VARCHAR(20)  | e.g. “neutral”, “happy”, “lonely” |
-| `entry_summary`| TEXT         | Short overview of the day |
-| `memory_chip_ids` | TEXT (JSON) | Connected memories |
-| `milestone_flag` | BOOLEAN     | Whether this is a major event |
+| `timeline_id`  | INT (PK/FK)  | References timeline_entries.id |
+| `memory_id`    | INT (PK/FK)  | References memory_chips.id |
+
+*This junction table replaces the `memory_chip_ids` JSON field in timeline_entries, providing a proper many-to-many relationship between timeline entries and memory chips.*
 
 ---
 

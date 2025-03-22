@@ -19,6 +19,25 @@ export const api = {
       const response = await axios.post(`${API_BASE_URL}${endpoint}`, data);
       return response.data;
     } catch (error) {
+      console.error(`API error on POST ${endpoint}:`, error.response || error);
+      throw error;
+    }
+  },
+  put: async (endpoint, data = {}) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}${endpoint}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`API error on PUT ${endpoint}:`, error.response || error);
+      throw error;
+    }
+  },
+  delete: async (endpoint, params = {}) => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}${endpoint}`, { params });
+      return response.data;
+    } catch (error) {
+      console.error(`API error on DELETE ${endpoint}:`, error.response || error);
       throw error;
     }
   }
