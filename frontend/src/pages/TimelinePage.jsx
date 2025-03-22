@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import TimelineNode from '../components/timeline/TimelineNode';
+import HorizontalTimeline from '../components/timeline/HorizontalTimeline';
+import { timelineService } from '../services/timelineService';
 
 // Styled components
 const TimelineContainer = styled(motion.div)`
@@ -131,7 +134,10 @@ const TimelineStream = styled.div`
   }
 `;
 
-const TimelineNode = styled.div`
+// These components are no longer used since we're using the TimelineNode component
+// Keeping them commented out for reference in case we need to revert
+/*
+const TimelineNodeWrapper = styled.div`
   position: relative;
   margin-bottom: ${props => props.theme.spacing.xl};
   
@@ -189,6 +195,7 @@ const TimelineDate = styled.div`
   color: ${props => props.theme.colors.accent};
   margin-bottom: ${props => props.theme.spacing.xs};
 `;
+*/
 
 const EmotionTag = styled.span`
   display: inline-block;
@@ -214,50 +221,58 @@ const pageVariants = {
  * Days like beads on a string, each with its own color and weight.
  */
 function TimelinePage() {
-  // Filter state
+  // State
+  const [timelineData, setTimelineData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [emotionFilter, setEmotionFilter] = useState('');
   const [showMilestonesOnly, setShowMilestonesOnly] = useState(false);
   const [dateRange, setDateRange] = useState('all');
   const [filteredData, setFilteredData] = useState([]);
+  const [isHorizontalLayout, setIsHorizontalLayout] = useState(false);
+  const [userId, setUserId] = useState(1); // Default to user 1 for testing
   
-  // Placeholder timeline data
-  const timelineData = [
-    {
-      id: 1,
-      date: 'March 15, 2025',
-      title: 'Dreams and Aspirations',
-      summary: 'We talked about your childhood dreams and how they shaped you.',
-      emotion: 'reflective',
-      isMilestone: false
-    },
-    {
-      id: 2,
-      date: 'March 17, 2025',
-      title: 'A Moment of Connection',
-      summary: 'A quiet conversation about belonging and understanding.',
-      emotion: 'peaceful',
-      isMilestone: true
-    },
-    {
-      id: 3,
-      date: 'March 18, 2025',
-      title: 'Today',
-      summary: 'Building something new together. A system for remembering.',
-      emotion: 'focused',
-      isMilestone: false
-    }
-  ];
+  // Fetch timeline data
+  useEffect(() => {
+    const fetchTimelineData = async () => {
+      try {
+        setLoading(true);
+        const response = await timelineService.getTimelineEntries(userId);
+        if (response.status === 'success') {
+          setTimelineData(response.days);
+        } else {
+          setError('Failed to fetch timeline data');
+        }
+      } catch (err) {
+        console.error('Error fetching timeline data:', err);
+        setError('Error connecting to the server');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTimelineData();
+  }, [userId]);
   
-  // Available emotions for filter
-  const emotions = [
-    { value: '', label: 'All emotions' },
-    { value: 'reflective', label: 'Reflective' },
-    { value: 'peaceful', label: 'Peaceful' },
-    { value: 'focused', label: 'Focused' },
-    { value: 'joy', label: 'Joy' },
-    { value: 'sadness', label: 'Sadness' },
-    { value: 'contemplative', label: 'Contemplative' }
-  ];
+  // Extract available emotions from the data for filter
+  const emotions = useMemo(() => {
+    const uniqueEmotions = new Set();
+    timelineData.forEach(entry => {
+      if (entry.emotion) {
+        uniqueEmotions.add(entry.emotion.toLowerCase());
+      }
+    });
+    
+    const emotionOptions = [{ value: '', label: 'All emotions' }];
+    Array.from(uniqueEmotions).sort().forEach(emotion => {
+      emotionOptions.push({
+        value: emotion,
+        label: emotion.charAt(0).toUpperCase() + emotion.slice(1)
+      });
+    });
+    
+    return emotionOptions;
+  }, [timelineData]);
   
   // Date range options
   const dateRanges = [
@@ -267,43 +282,55 @@ function TimelinePage() {
     { value: 'month', label: 'This month' }
   ];
   
-  // Map emotion to color
-  const emotionColors = {
-    reflective: '#4a69bd', // blue
-    peaceful: '#88d8b0',   // mint
-    focused: '#8a2be2',    // purple
-    joy: '#ffcc5c',        // yellow
-    sadness: '#4a69bd',    // blue
-    contemplative: '#8a2be2', // purple
-  };
-  
   // Apply filters
   useEffect(() => {
+    if (!timelineData.length) return;
+    
     let filtered = [...timelineData];
     
     // Apply emotion filter
     if (emotionFilter) {
-      filtered = filtered.filter(item => item.emotion === emotionFilter);
+      filtered = filtered.filter(item => 
+        item.emotion && item.emotion.toLowerCase() === emotionFilter.toLowerCase()
+      );
     }
     
     // Apply milestone filter
     if (showMilestonesOnly) {
-      filtered = filtered.filter(item => item.isMilestone);
+      filtered = filtered.filter(item => item.milestone_flag);
     }
     
-    // Apply date range filter (simplified for placeholder data)
+    // Apply date range filter
     if (dateRange !== 'all') {
-      // In a real implementation, we would filter by actual dates
-      // For now, just show fewer items for narrower date ranges
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
       if (dateRange === 'today') {
-        filtered = filtered.slice(0, 1);
+        filtered = filtered.filter(item => {
+          const itemDate = new Date(item.date);
+          return itemDate.toDateString() === today.toDateString();
+        });
       } else if (dateRange === 'week') {
-        filtered = filtered.slice(0, 2);
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        
+        filtered = filtered.filter(item => {
+          const itemDate = new Date(item.date);
+          return itemDate >= weekAgo;
+        });
+      } else if (dateRange === 'month') {
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(today.getMonth() - 1);
+        
+        filtered = filtered.filter(item => {
+          const itemDate = new Date(item.date);
+          return itemDate >= monthAgo;
+        });
       }
     }
     
     setFilteredData(filtered);
-  }, [emotionFilter, showMilestonesOnly, dateRange]);
+  }, [timelineData, emotionFilter, showMilestonesOnly, dateRange]);
   
   // Reset all filters
   const handleResetFilters = () => {
@@ -311,6 +338,40 @@ function TimelinePage() {
     setShowMilestonesOnly(false);
     setDateRange('all');
   };
+  
+  // Toggle layout
+  const toggleLayout = () => {
+    setIsHorizontalLayout(!isHorizontalLayout);
+  };
+  
+  if (loading) {
+    return (
+      <TimelineContainer>
+        <TimelineHeader>
+          <TimelineTitle>Memory Timeline</TimelineTitle>
+          <TimelineSubtitle>Loading your memories...</TimelineSubtitle>
+        </TimelineHeader>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <p>Retrieving your timeline data...</p>
+        </div>
+      </TimelineContainer>
+    );
+  }
+  
+  if (error) {
+    return (
+      <TimelineContainer>
+        <TimelineHeader>
+          <TimelineTitle>Memory Timeline</TimelineTitle>
+          <TimelineSubtitle>Something went wrong</TimelineSubtitle>
+        </TimelineHeader>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <p>Error: {error}</p>
+          <button onClick={() => window.location.reload()}>Try Again</button>
+        </div>
+      </TimelineContainer>
+    );
+  }
   
   return (
     <TimelineContainer
@@ -369,6 +430,18 @@ function TimelinePage() {
               Milestones only
             </CheckboxLabel>
           </FilterCheckbox>
+          
+          <FilterCheckbox>
+            <CheckboxInput 
+              type="checkbox" 
+              id="horizontal-layout" 
+              checked={isHorizontalLayout}
+              onChange={toggleLayout}
+            />
+            <CheckboxLabel htmlFor="horizontal-layout">
+              Horizontal layout
+            </CheckboxLabel>
+          </FilterCheckbox>
         </FilterGroup>
         
         <ResetButton onClick={handleResetFilters}>
@@ -376,28 +449,18 @@ function TimelinePage() {
         </ResetButton>
       </FilterBar>
       
-      <TimelineStream>
-        {(filteredData.length > 0 ? filteredData : timelineData).map((item, index) => (
-          <TimelineNode key={item.id}>
-            <TimelineNodeMarker isMilestone={item.isMilestone} />
-            <div className="timeline-content">
-              <TimelineContent>
-                <TimelineDate>{item.date}</TimelineDate>
-                <h3>{item.title}</h3>
-                <p>{item.summary}</p>
-                <div style={{ marginTop: '10px' }}>
-                  <EmotionTag color={emotionColors[item.emotion]}>
-                    {item.emotion}
-                  </EmotionTag>
-                  {item.isMilestone && (
-                    <EmotionTag color="#ff6b81">milestone</EmotionTag>
-                  )}
-                </div>
-              </TimelineContent>
-            </div>
-          </TimelineNode>
-        ))}
-      </TimelineStream>
+      {isHorizontalLayout ? (
+        <HorizontalTimeline entries={filteredData.length > 0 ? filteredData : timelineData} />
+      ) : (
+        <TimelineStream>
+          {(filteredData.length > 0 ? filteredData : timelineData).map((entry) => (
+            <TimelineNode 
+              key={entry.id} 
+              entry={entry}
+            />
+          ))}
+        </TimelineStream>
+      )}
     </TimelineContainer>
   );
 }

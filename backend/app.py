@@ -44,6 +44,9 @@ from backend.models.memory_tag import MemoryTag
 engine = create_engine(app.config['DATABASE_URL'])
 db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
+# Attach db_session to app
+app.db_session = db_session
+
 # Create database tables manually
 def create_tables():
     """Create database tables before starting the app.

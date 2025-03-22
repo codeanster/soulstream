@@ -47,7 +47,11 @@ class MemoryChip(Base, TimestampMixin):
     # Relationships
     user = relationship('User', back_populates='memory_chips')
     character = relationship('Character', back_populates='memory_chips')
-    memory_tags = relationship('MemoryTag', back_populates='memory_chip', cascade='all, delete-orphan')
+    memory_tags = relationship(
+        'MemoryTag',
+        secondary='memory_tag_association',
+        back_populates='memory_chips'
+    )
     timeline_entries = relationship(
         'TimelineEntry',
         secondary='timeline_memory_links',
